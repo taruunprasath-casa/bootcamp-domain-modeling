@@ -1,153 +1,254 @@
- class User {
-  id: number;
-  name: string;
-  email: string;
-  address: Address[];
+type OrderStatus =
+  | "Pending"
+  | "Accepted"
+  | "Preparing"
+  | "On the Way"
+  | "Delivered"
+  | "Cancelled";
+type PaymentStatus = "Pending" | "Completed" | "Failed" | "Refunded";
 
-   register(name: string, email: string, addresses: Address[]): void;
-   updateName(newName: string): void;
-   updateEmail(newEmail: string): void;
-   addAddress(address: Address): void;
-   removeAddress(addressId: number): void;
-   placeOrder(restaurant: Restaurant, items: Food[]): Order;
+class Address {
+  constructor(
+    public id: number,
+    public addressLine1: string,
+    public street: string,
+    public city: string,
+    public state: string,
+    public zipCode: string,
+    public addressLine2?: string
+  ) {}
 
-
-   class Customer extends User{
-    private cart: Food[];
-    constructor(name: string, email: string, addresses: Address[]) {
-        super();
-        this.cart = [];
-    }
-   }
-   class HotelManager extends User{
-   }
+  updateAddressLine1(line: string) {
+    this.addressLine1 = line;
+  }
+  updateCity(city: string) {
+    this.city = city;
+  }
+  updateState(state: string) {
+    this.state = state;
+  }
+  updateZipCode(zip: string) {
+    this.zipCode = zip;
+  }
 }
 
- class Restaurant {
-  id: number;
-  name: string;
-  address: Address[];
-  menu: Food[];
+class User {
+  constructor(
+    public id: number,
+    public name: string,
+    public email: string,
+    public addresses: Address[] = []
+  ) {}
 
-   addMenuItem(food: Food): void;
-   removeMenuItem(foodId: number): void;
-   updateMenuItemPrice(foodId: number, newPrice: number): void;
-   prepareOrder(order: Order): void;
+  updateName(newName: string) {
+    this.name = newName;
+  }
+  updateEmail(newEmail: string) {
+    this.email = newEmail;
+  }
+  addAddress(address: Address) {
+    this.addresses.push(address);
+  }
+  removeAddress(addressId: number) {
+    this.addresses = this.addresses.filter((a) => a.id !== addressId);
+  }
 }
 
- class Food {
-  id: number;
-  name: string;
-  quantity: string;
-  price: number;
+class Customer extends User {
+  private cart: Food[] = [];
 
-   updateQuantity(newQuantity: string): void;
-   updatePrice(newPrice: number): void;
+  addToCart(food: Food) {
+    this.cart.push(food);
+  }
+  removeFromCart(foodId: number) {
+    this.cart = this.cart.filter((f) => f.id !== foodId);
+  }
+  clearCart() {
+    this.cart = [];
+  }
 }
 
- class OrderItem {
-  id: number;
-  food: Food;
-  price: number;
-
-   changeQuantity(quantity: string): void;
+class HotelManager extends User {
+  constructor(
+    public id: number,
+    public name: string,
+    public email: string,
+    public addresses: Address[] = []
+  ) {
+    super(id, name, email, addresses);
+    console.log("Hotel Manager created");
+  }
 }
 
- class Order {
-  id: number;
-  user: User;
-  restaurant: Restaurant;
-  items: OrderItem[];
-  orderDescription: string;
-  orderTime: Date;
-  offer?: Offer;
-  coupon?: Coupon;
-  payment?: Payment;
-  status:
-    | "Pending"
-    | "Accepted"
-    | "Preparing"
-    | "On the Way"
-    | "Delivered"
-    | "Cancelled";
+class Food {
+  constructor(
+    public id: number,
+    public name: string,
+    public quantity: string,
+    public price: number
+  ) {}
 
-   addItem(food: Food, quantity: string): void;
-   removeItem(foodId: number): void;
-   applyOffer(offer: Offer): void;
-   applyCoupon(coupon: Coupon): void;
-   updateStatus(newStatus: Order["status"]): void;
-   completePayment(payment: Payment): void;
+  updateQuantity(newQuantity: string) {
+    this.quantity = newQuantity;
+  }
+  updatePrice(newPrice: number) {
+    this.price = newPrice;
+  }
 }
 
- class Address {
-  id: number;
-  addressLine1: string;
-  addressLine2?: string;
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
+class Restaurant {
+  constructor(
+    public id: number,
+    public name: string,
+    public address: Address[],
+    public menu: Food[] = []
+  ) {}
 
-   updateAddressLine1(line: string): void;
-   updateCity(city: string): void;
-   updateState(state: string): void;
-   updateZipCode(zip: string): void;
+  addMenuItem(food: Food) {
+    this.menu.push(food);
+  }
+  removeMenuItem(foodId: number) {
+    this.menu = this.menu.filter((food) => food.id !== foodId);
+  }
+  updateMenuItemPrice(foodId: number, newPrice: number) {
+    const item = this.menu.find((food) => food.id === foodId);
+    if (item) item.updatePrice(newPrice);
+  }
+}
+class OrderItem {
+  constructor(
+    public id: number,
+    public food: Food,
+    public price: number,
+    public quantity: string
+  ) {}
+
+  changeQuantity(quantity: string) {
+    this.quantity = quantity;
+  }
 }
 
- class Offer {
-  id: number;
-  name: string;
-  description: string;
-  discount: string | number;
-  startDate: Date;
-  endDate: Date;
+class Offer {
+  constructor(
+    public id: number,
+    public name: string,
+    public description: string,
+    public discount: string | number,
+    public startDate: Date,
+    public endDate: Date
+  ) {}
 
-   isValid(date: Date): boolean;
+  isValid(date: Date): boolean {
+    return date >= this.startDate && date <= this.endDate;
+  }
 }
 
- class Coupon {
-  id: number;
-  name: string;
-  code: string;
-  offer: Offer;
-  usageLimit?: number;
-  usedCount?: number;
+class Coupon {
+  constructor(
+    public id: number,
+    public name: string,
+    public code: string,
+    public offer: Offer,
+    public usageLimit?: number,
+    public usedCount: number = 0
+  ) {}
 
-   canUse(): boolean;
-   markUsed(): void;
+  canUse(): boolean {
+    return this.usageLimit ? this.usedCount < this.usageLimit : true;
+  }
+
+  markUsed(): void {
+    if (this.canUse()) this.usedCount++;
+  }
 }
 
- class Payment {
-  id: number;
-  paymentMethod: string;
-  paymentDate: Date;
-  amount: number;
-  status: "Pending" | "Completed" | "Failed" | "Refunded";
-  transactionId?: string;
+class Payment {
+  constructor(
+    public id: number,
+    public paymentMethod: string,
+    public amount: number,
+    public status: PaymentStatus = "Pending",
+    public paymentDate?: Date,
+    public transactionId?: string
+  ) {}
 
-   complete(transactionId: string): void;
-   fail(): void;
-   refund(): void;
+  complete(transactionId: string) {
+    this.status = "Completed";
+    this.paymentDate = new Date();
+    this.transactionId = transactionId;
+  }
+  fail() {
+    this.status = "Failed";
+  }
+  refund() {
+    this.status = "Refunded";
+  }
 }
 
- class Delivery {
-  id: number;
-  deliveryAddress: Address;
-  deliveryPersonName?: string;
-  deliveryPersonContact?: string;
-  estimatedDeliveryTime?: Date;
+class Order {
+  constructor(
+    public id: number,
+    public user: User,
+    public restaurant: Restaurant,
+    public items: OrderItem[] = [],
+    public orderDescription: string = "",
+    public orderTime: Date = new Date(),
+    public status: OrderStatus = "Pending",
+    public offer?: Offer,
+    public coupon?: Coupon,
+    public payment?: Payment
+  ) {}
 
-   assignDeliveryPerson(name: string, contact: string): void;
-   updateEstimatedTime(time: Date): void;
+  addItem(food: Food, quantity: string) {
+    this.items.push(new OrderItem(Date.now(), food, food.price, quantity));
+  }
+  removeItem(foodId: number) {
+    this.items = this.items.filter((i) => i.food.id !== foodId);
+  }
+  applyOffer(offer: Offer) {
+    if (offer.isValid(new Date())) this.offer = offer;
+  }
+  applyCoupon(coupon: Coupon) {
+    if (coupon.canUse()) this.coupon = coupon;
+  }
+  updateStatus(newStatus: OrderStatus) {
+    this.status = newStatus;
+  }
+  completePayment(payment: Payment) {
+    this.payment = payment;
+  }
 }
 
- class Rating {
-  id: number;
-  reviewRating: number;
-  comment: string;
-  user: User;
-  restaurant: Restaurant;
-  reviewDate: Date;
+class Delivery {
+  constructor(
+    public id: number,
+    public deliveryAddress: Address,
+    public deliveryPersonName?: string,
+    public deliveryPersonContact?: string,
+    public estimatedDeliveryTime?: Date
+  ) {}
 
-   updateRating(newRating: number, newComment: string): void;
+  assignDeliveryPerson(name: string, contact: string) {
+    this.deliveryPersonName = name;
+    this.deliveryPersonContact = contact;
+  }
+  updateEstimatedTime(time: Date) {
+    this.estimatedDeliveryTime = time;
+  }
+}
+
+class Rating {
+  constructor(
+    public id: number,
+    public reviewRating: number,
+    public comment: string,
+    public user: User,
+    public restaurant: Restaurant,
+    public reviewDate: Date = new Date()
+  ) {}
+
+  updateRating(newRating: number, newComment: string) {
+    this.reviewRating = newRating;
+    this.comment = newComment;
+  }
 }
